@@ -1,0 +1,8 @@
+name: XaeroClaimMessenger
+version: '1.0.0'
+main: me.justahuman.xaeroclaimmessenger.XaeroClaimMessenger
+api-version: '1.20'
+load: POSTWORLD
+authors: [ JustAHuman ]
+description: A xaero addon adding support for claim plugins
+softdepend: [ HuskTowns, GriefPrevention, Lands, Towny ]
