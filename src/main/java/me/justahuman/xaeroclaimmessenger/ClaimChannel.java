@@ -1,6 +1,7 @@
 package me.justahuman.xaeroclaimmessenger;
 
 import io.papermc.paper.event.packet.PlayerChunkLoadEvent;
+import io.papermc.paper.event.packet.PlayerChunkUnloadEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,6 +13,8 @@ import org.bukkit.event.player.PlayerRegisterChannelEvent;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +24,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public abstract class ClaimChannel implements Listener {
-    private static final int CHANNEL_REGISTER_TIMEOUT = 20;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClaimChannel.class);
+    private static final int CHANNEL_REGISTER_TIMEOUT = 20 * 3;
     private final Map<UUID, Boolean> subscribedPlayers = new HashMap<>();
     protected final Map<ChunkPos, List<UUID>> players = new HashMap<>();
 
@@ -89,7 +93,7 @@ public abstract class ClaimChannel implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onUnloadChunk(PlayerChunkLoadEvent event) {
+    public void onUnloadChunk(PlayerChunkUnloadEvent event) {
         UUID playerId = event.getPlayer().getUniqueId();
         Boolean subscribed = this.subscribedPlayers.get(playerId);
         if (subscribed != null && !subscribed) {
