@@ -5,10 +5,10 @@ import com.google.common.io.ByteStreams;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
-public record Claim(long id, @Nullable UUID owner, String customName, NamespacedKey worldKey, List<ChunkPos> chunks, int color) {
+public record Claim(long id, @Nullable UUID owner, String customName, NamespacedKey worldKey, Set<ChunkPos> chunks, int color) {
     public byte[] serialize() {
         ByteArrayDataOutput output = ByteStreams.newDataOutput();
         output.writeLong(id);
@@ -33,6 +33,6 @@ public record Claim(long id, @Nullable UUID owner, String customName, Namespaced
     }
 
     public static Claim deletion(long id, NamespacedKey worldKey) {
-        return new Claim(id, null, "", worldKey, List.of(), 0);
+        return new Claim(id, null, "", worldKey, Set.of(), 0);
     }
 }

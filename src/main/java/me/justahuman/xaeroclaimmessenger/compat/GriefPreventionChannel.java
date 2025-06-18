@@ -18,6 +18,7 @@ import org.bukkit.event.EventPriority;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -75,7 +76,7 @@ public class GriefPreventionChannel extends ClaimChannel {
                 ownerID,
                 "",
                 gp.getLesserBoundaryCorner().getWorld().getKey(),
-                new ArrayList<>(),
+                new HashSet<>(),
                 XaeroClaimMessenger.locatorBarColor(ownerID)
         );
         Location min = gp.getLesserBoundaryCorner();

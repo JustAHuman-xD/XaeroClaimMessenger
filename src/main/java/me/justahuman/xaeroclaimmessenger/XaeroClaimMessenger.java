@@ -3,6 +3,7 @@ package me.justahuman.xaeroclaimmessenger;
 import me.justahuman.xaeroclaimmessenger.compat.GriefPreventionChannel;
 import me.justahuman.xaeroclaimmessenger.compat.HuskTownsChannel;
 import me.justahuman.xaeroclaimmessenger.compat.LandsChannel;
+import me.justahuman.xaeroclaimmessenger.compat.ResidenceChannel;
 import me.justahuman.xaeroclaimmessenger.compat.TownyChannel;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -16,6 +17,7 @@ public final class XaeroClaimMessenger extends JavaPlugin {
     public static final String HUSK_TOWNS = "HuskTowns";
     public static final String LANDS = "Lands";
     public static final String TOWNY = "Towny";
+    public static final String RESIDENCE = "Residence";
 
     public static final String CLAIM_CHANNEL = channel("claim");
     public static final String DELETE_CHANNEL = channel("delete_claim");
@@ -31,7 +33,8 @@ public final class XaeroClaimMessenger extends JavaPlugin {
                 new PluginChannel(HUSK_TOWNS, () -> HuskTownsChannel::new),
                 new PluginChannel(LANDS, () -> LandsChannel::new),
                 new PluginChannel(GP, () -> GriefPreventionChannel::new),
-                new PluginChannel(TOWNY, () -> TownyChannel::new)
+                new PluginChannel(TOWNY, () -> TownyChannel::new),
+                new PluginChannel(RESIDENCE, () -> ResidenceChannel::new)
         );
     }
 

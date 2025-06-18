@@ -1,7 +1,6 @@
 package me.justahuman.xaeroclaimmessenger.compat;
 
 import com.palmergames.bukkit.towny.TownyAPI;
-import com.palmergames.bukkit.towny.event.DeleteTownEvent;
 import com.palmergames.bukkit.towny.event.NewTownEvent;
 import com.palmergames.bukkit.towny.event.PreDeleteTownEvent;
 import com.palmergames.bukkit.towny.event.RenameTownEvent;
@@ -23,7 +22,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -102,7 +101,7 @@ public class TownyChannel extends ClaimChannel {
                 town.getMayor().getUUID(),
                 town.getFormattedName(),
                 worldKey,
-                new ArrayList<>(),
+                new HashSet<>(),
                 townColor == null ? XaeroClaimMessenger.locatorBarColor(town.getMayor().getUUID()) : townColor.getRGB()
         );
 

@@ -12,11 +12,12 @@ import net.william278.husktowns.events.TownDisbandEvent;
 import net.william278.husktowns.events.TownUpdateEvent;
 import net.william278.husktowns.town.Town;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -67,7 +68,7 @@ public class HuskTownsChannel extends ClaimChannel {
                 town.getMayor(),
                 town.getName(),
                 world.getKey(),
-                new ArrayList<>(),
+                new HashSet<>(),
                 town.getDisplayColor().value()
             );
             for (TownClaim townClaim : claimWorld.getTownClaims(town.getId(), huskTowns)) {
@@ -81,15 +82,15 @@ public class HuskTownsChannel extends ClaimChannel {
 
     @Override
     protected List<Claim> getClaims(ChunkPos chunk) {
-        World world = chunk.getWorld();
-        if (world == null) {
+        Location location = chunk.toLocation();
+        if (location == null) {
             return List.of();
         }
-        TownClaim townClaim = api.getClaimAt(world.getChunkAt(chunk.x(), chunk.z())).orElse(null);
+        TownClaim townClaim = api.getClaimAt(location).orElse(null);
         if (townClaim == null) {
             return List.of();
         }
-        Claim claim = from(world, townClaim.town());
+        Claim claim = from(location.getWorld(), townClaim.town());
         return claim == null ? List.of() : List.of(claim);
     }
 }

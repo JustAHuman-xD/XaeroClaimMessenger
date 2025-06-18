@@ -21,7 +21,7 @@ import org.bukkit.event.EventPriority;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -111,7 +111,7 @@ public class LandsChannel extends ClaimChannel {
                 land.getOwnerUID(),
                 land.getColorName(),
                 world.getKey(),
-                new ArrayList<>(),
+                new HashSet<>(),
                 land.getWebMapFillColor() == null ? XaeroClaimMessenger.locatorBarColor(land.getOwnerUID()) : land.getWebMapFillColor()
         );
         if (container != null) {
