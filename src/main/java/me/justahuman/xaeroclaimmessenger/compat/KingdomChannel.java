@@ -38,7 +38,8 @@ public class KingdomChannel extends ClaimChannel {
                 kingdom.getName(),
                 worldKey,
                 new HashSet<>(),
-                kingdom.getColors().get(kingdom.getGroup().getNexus())
-        )
+                0 //kingdom.getColors().get(kingdom.getGroup().getNexus())
+        );
+        return null;
     }
 }
