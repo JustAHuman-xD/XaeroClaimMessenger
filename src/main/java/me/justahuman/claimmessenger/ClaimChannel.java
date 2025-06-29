@@ -1,4 +1,4 @@
-package me.justahuman.xaeroclaimmessenger;
+package me.justahuman.claimmessenger;
 
 import io.papermc.paper.event.packet.PlayerChunkLoadEvent;
 import io.papermc.paper.event.packet.PlayerChunkUnloadEvent;
@@ -30,14 +30,14 @@ public abstract class ClaimChannel implements Listener {
     protected final Map<ChunkPos, List<UUID>> players = new HashMap<>();
 
     protected ClaimChannel() {
-        final Plugin plugin = XaeroClaimMessenger.getInstance();
+        final Plugin plugin = ClaimMessenger.getInstance();
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        Bukkit.getScheduler().runTaskLater(XaeroClaimMessenger.getInstance(), () -> {
+        Bukkit.getScheduler().runTaskLater(ClaimMessenger.getInstance(), () -> {
             UUID playerId = player.getUniqueId();
             if (!subscribedPlayers.containsKey(playerId)) {
                 for (ChunkPos pos : players.keySet()) {
@@ -63,9 +63,9 @@ public abstract class ClaimChannel implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerRegister(PlayerRegisterChannelEvent event) {
-        if (event.getChannel().equals(XaeroClaimMessenger.CLAIM_CHANNEL)) {
+        if (event.getChannel().equals(ClaimMessenger.CLAIM_CHANNEL)) {
             this.subscribedPlayers.put(event.getPlayer().getUniqueId(), true);
-        } else if (event.getChannel().equals(XaeroClaimMessenger.DELETE_CHANNEL)) {
+        } else if (event.getChannel().equals(ClaimMessenger.DELETE_CHANNEL)) {
             this.subscribedPlayers.put(event.getPlayer().getUniqueId(), true);
         }
     }
@@ -87,8 +87,13 @@ public abstract class ClaimChannel implements Listener {
             return;
         }
 
-        for (Claim claim : getClaims(pos)) {
-            sendClaim(playerId, claim);
+        List<Claim> claims = getClaims(pos);
+        if (claims.isEmpty()) {
+            sendNoClaims(player, pos);
+        } else {
+            for (Claim claim : getClaims(pos)) {
+                sendClaim(player, claim);
+            }
         }
     }
 
@@ -117,7 +122,7 @@ public abstract class ClaimChannel implements Listener {
     }
 
     protected void delay(Runnable runnable) {
-        Bukkit.getScheduler().runTaskLater(XaeroClaimMessenger.getInstance(), runnable, 1L);
+        Bukkit.getScheduler().runTaskLater(ClaimMessenger.getInstance(), runnable, 1L);
     }
 
     protected abstract List<Claim> getClaims(ChunkPos chunk);
@@ -148,18 +153,6 @@ public abstract class ClaimChannel implements Listener {
         }
     }
 
-    public void deleteClaim(@Nullable UUID playerId, @NotNull Claim claim) {
-        if (playerId != null) {
-            deleteClaim(Bukkit.getPlayer(playerId), claim);
-        }
-    }
-
-    public void deleteClaim(@Nullable Player player, @NotNull Claim claim) {
-        if (player != null && subscribedPlayers.getOrDefault(player.getUniqueId(), false)) {
-            player.sendPluginMessage(XaeroClaimMessenger.getInstance(), XaeroClaimMessenger.DELETE_CHANNEL, claim.serializeDeletion());
-        }
-    }
-
     public void sendClaim(@Nullable UUID playerId, @NotNull Claim claim) {
         if (playerId != null) {
             sendClaim(Bukkit.getPlayer(playerId), claim);
@@ -168,7 +161,31 @@ public abstract class ClaimChannel implements Listener {
 
     public void sendClaim(@Nullable Player player, @NotNull Claim claim) {
         if (player != null && subscribedPlayers.getOrDefault(player.getUniqueId(), false)) {
-            player.sendPluginMessage(XaeroClaimMessenger.getInstance(), XaeroClaimMessenger.CLAIM_CHANNEL, claim.serialize());
+            player.sendPluginMessage(ClaimMessenger.getInstance(), ClaimMessenger.CLAIM_CHANNEL, claim.serialize());
+        }
+    }
+
+    public void sendNoClaims(@Nullable UUID playerId, @NotNull ChunkPos pos) {
+        if (playerId != null) {
+            sendNoClaims(Bukkit.getPlayer(playerId), pos);
+        }
+    }
+
+    public void sendNoClaims(@Nullable Player player, @NotNull ChunkPos pos) {
+        if (player != null && subscribedPlayers.getOrDefault(player.getUniqueId(), false)) {
+            player.sendPluginMessage(ClaimMessenger.getInstance(), ClaimMessenger.NO_CLAIMS_CHANNEL, pos.serializeNoClaims());
+        }
+    }
+
+    public void deleteClaim(@Nullable UUID playerId, @NotNull Claim claim) {
+        if (playerId != null) {
+            deleteClaim(Bukkit.getPlayer(playerId), claim);
+        }
+    }
+
+    public void deleteClaim(@Nullable Player player, @NotNull Claim claim) {
+        if (player != null && subscribedPlayers.getOrDefault(player.getUniqueId(), false)) {
+            player.sendPluginMessage(ClaimMessenger.getInstance(), ClaimMessenger.DELETE_CHANNEL, claim.serializeDeletion());
         }
     }
 }

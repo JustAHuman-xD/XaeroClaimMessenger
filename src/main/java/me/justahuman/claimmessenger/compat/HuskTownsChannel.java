@@ -1,9 +1,9 @@
-package me.justahuman.xaeroclaimmessenger.compat;
+package me.justahuman.claimmessenger.compat;
 
-import me.justahuman.xaeroclaimmessenger.ChunkPos;
-import me.justahuman.xaeroclaimmessenger.Claim;
-import me.justahuman.xaeroclaimmessenger.ClaimChannel;
-import me.justahuman.xaeroclaimmessenger.XaeroClaimMessenger;
+import me.justahuman.claimmessenger.ChunkPos;
+import me.justahuman.claimmessenger.Claim;
+import me.justahuman.claimmessenger.ClaimChannel;
+import me.justahuman.claimmessenger.ClaimMessenger;
 import net.william278.husktowns.BukkitHuskTowns;
 import net.william278.husktowns.api.BukkitHuskTownsAPI;
 import net.william278.husktowns.claim.Chunk;
@@ -26,7 +26,7 @@ public class HuskTownsChannel extends ClaimChannel {
     private final BukkitHuskTownsAPI api = BukkitHuskTownsAPI.getInstance();
 
     public HuskTownsChannel() {
-        this.huskTowns = (BukkitHuskTowns) Bukkit.getPluginManager().getPlugin(XaeroClaimMessenger.HUSK_TOWNS);
+        this.huskTowns = (BukkitHuskTowns) Bukkit.getPluginManager().getPlugin(ClaimMessenger.HUSK_TOWNS);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

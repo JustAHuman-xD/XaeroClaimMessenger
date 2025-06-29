@@ -1,9 +1,9 @@
-package me.justahuman.xaeroclaimmessenger.compat;
+package me.justahuman.claimmessenger.compat;
 
-import me.justahuman.xaeroclaimmessenger.ChunkPos;
-import me.justahuman.xaeroclaimmessenger.Claim;
-import me.justahuman.xaeroclaimmessenger.ClaimChannel;
-import me.justahuman.xaeroclaimmessenger.XaeroClaimMessenger;
+import me.justahuman.claimmessenger.ChunkPos;
+import me.justahuman.claimmessenger.Claim;
+import me.justahuman.claimmessenger.ClaimChannel;
+import me.justahuman.claimmessenger.ClaimMessenger;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.ryanhamshire.GriefPrevention.events.ClaimChangeEvent;
 import me.ryanhamshire.GriefPrevention.events.ClaimCreatedEvent;
@@ -77,7 +77,7 @@ public class GriefPreventionChannel extends ClaimChannel {
                 "",
                 gp.getLesserBoundaryCorner().getWorld().getKey(),
                 new HashSet<>(),
-                XaeroClaimMessenger.locatorBarColor(ownerID)
+                ClaimMessenger.locatorBarColor(ownerID)
         );
         Location min = gp.getLesserBoundaryCorner();
         Location max = gp.getGreaterBoundaryCorner();

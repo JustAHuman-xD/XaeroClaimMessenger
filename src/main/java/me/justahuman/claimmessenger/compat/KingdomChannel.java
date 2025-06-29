@@ -1,16 +1,13 @@
-package me.justahuman.xaeroclaimmessenger.compat;
+package me.justahuman.claimmessenger.compat;
 
-import me.justahuman.xaeroclaimmessenger.ChunkPos;
-import me.justahuman.xaeroclaimmessenger.Claim;
-import me.justahuman.xaeroclaimmessenger.ClaimChannel;
-import org.bukkit.Bukkit;
+import me.justahuman.claimmessenger.ChunkPos;
+import me.justahuman.claimmessenger.Claim;
+import me.justahuman.claimmessenger.ClaimChannel;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.kingdoms.constants.group.Kingdom;
 import org.kingdoms.constants.land.Land;
 import org.kingdoms.constants.land.location.SimpleChunkLocation;
-import org.kingdoms.constants.namespace.Namespace;
-import org.kingdoms.server.location.World;
 
 import java.util.HashSet;
 import java.util.List;

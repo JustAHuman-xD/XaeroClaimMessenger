@@ -1,4 +1,4 @@
-package me.justahuman.xaeroclaimmessenger;
+package me.justahuman.claimmessenger;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;

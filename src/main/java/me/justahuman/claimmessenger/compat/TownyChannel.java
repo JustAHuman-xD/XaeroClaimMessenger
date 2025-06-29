@@ -1,4 +1,4 @@
-package me.justahuman.xaeroclaimmessenger.compat;
+package me.justahuman.claimmessenger.compat;
 
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.event.NewTownEvent;
@@ -11,10 +11,10 @@ import com.palmergames.bukkit.towny.object.Resident;
 import com.palmergames.bukkit.towny.object.Town;
 import com.palmergames.bukkit.towny.object.TownBlock;
 import com.palmergames.bukkit.towny.object.WorldCoord;
-import me.justahuman.xaeroclaimmessenger.ChunkPos;
-import me.justahuman.xaeroclaimmessenger.Claim;
-import me.justahuman.xaeroclaimmessenger.ClaimChannel;
-import me.justahuman.xaeroclaimmessenger.XaeroClaimMessenger;
+import me.justahuman.claimmessenger.ChunkPos;
+import me.justahuman.claimmessenger.Claim;
+import me.justahuman.claimmessenger.ClaimChannel;
+import me.justahuman.claimmessenger.ClaimMessenger;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -34,7 +34,7 @@ public class TownyChannel extends ClaimChannel {
     public TownyChannel() {
         int cellSize = WorldCoord.getCellSize();
         if (cellSize < 16 || cellSize % 16 != 0) {
-            throw new IllegalStateException("Townys cell size must be a product of 16 for XaeroClaimMessenger!");
+            throw new IllegalStateException("Townys cell size must be a product of 16 for ClaimMessenger!");
         }
     }
 
@@ -102,7 +102,7 @@ public class TownyChannel extends ClaimChannel {
                 town.getFormattedName(),
                 worldKey,
                 new HashSet<>(),
-                townColor == null ? XaeroClaimMessenger.locatorBarColor(town.getMayor().getUUID()) : townColor.getRGB()
+                townColor == null ? ClaimMessenger.locatorBarColor(town.getMayor().getUUID()) : townColor.getRGB()
         );
 
         for (TownBlock townBlock : town.getTownBlocks()) {

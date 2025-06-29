@@ -1,10 +1,10 @@
-package me.justahuman.xaeroclaimmessenger;
+package me.justahuman.claimmessenger;
 
-import me.justahuman.xaeroclaimmessenger.compat.GriefPreventionChannel;
-import me.justahuman.xaeroclaimmessenger.compat.HuskTownsChannel;
-import me.justahuman.xaeroclaimmessenger.compat.LandsChannel;
-import me.justahuman.xaeroclaimmessenger.compat.ResidenceChannel;
-import me.justahuman.xaeroclaimmessenger.compat.TownyChannel;
+import me.justahuman.claimmessenger.compat.GriefPreventionChannel;
+import me.justahuman.claimmessenger.compat.HuskTownsChannel;
+import me.justahuman.claimmessenger.compat.LandsChannel;
+import me.justahuman.claimmessenger.compat.ResidenceChannel;
+import me.justahuman.claimmessenger.compat.TownyChannel;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -12,7 +12,7 @@ import java.awt.*;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-public final class XaeroClaimMessenger extends JavaPlugin {
+public final class ClaimMessenger extends JavaPlugin {
     public static final String GP = "GriefPrevention";
     public static final String HUSK_TOWNS = "HuskTowns";
     public static final String LANDS = "Lands";
@@ -20,13 +20,15 @@ public final class XaeroClaimMessenger extends JavaPlugin {
     public static final String RESIDENCE = "Residence";
 
     public static final String CLAIM_CHANNEL = channel("claim");
+    public static final String NO_CLAIMS_CHANNEL = channel("no_claims");
     public static final String DELETE_CHANNEL = channel("delete_claim");
-    private static XaeroClaimMessenger instance;
+    private static ClaimMessenger instance;
 
     @Override
     public void onEnable() {
         instance = this;
         this.getServer().getMessenger().registerOutgoingPluginChannel(this, CLAIM_CHANNEL);
+        this.getServer().getMessenger().registerOutgoingPluginChannel(this, NO_CLAIMS_CHANNEL);
         this.getServer().getMessenger().registerOutgoingPluginChannel(this, DELETE_CHANNEL);
 
         this.tryRegisterChannel(
@@ -72,10 +74,10 @@ public final class XaeroClaimMessenger extends JavaPlugin {
     }
 
     public static String channel(String path) {
-        return "xaeropluginclaims:" + path;
+        return "pluginclaims:" + path;
     }
 
-    public static XaeroClaimMessenger getInstance() {
+    public static ClaimMessenger getInstance() {
         return instance;
     }
 

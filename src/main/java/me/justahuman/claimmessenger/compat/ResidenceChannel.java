@@ -1,4 +1,4 @@
-package me.justahuman.xaeroclaimmessenger.compat;
+package me.justahuman.claimmessenger.compat;
 
 import com.bekvon.bukkit.residence.Residence;
 import com.bekvon.bukkit.residence.containers.ResidencePlayer;
@@ -8,10 +8,10 @@ import com.bekvon.bukkit.residence.event.ResidenceRenameEvent;
 import com.bekvon.bukkit.residence.protection.ClaimedResidence;
 import com.bekvon.bukkit.residence.protection.CuboidArea;
 import com.bekvon.bukkit.residence.protection.ResidenceManager;
-import me.justahuman.xaeroclaimmessenger.ChunkPos;
-import me.justahuman.xaeroclaimmessenger.Claim;
-import me.justahuman.xaeroclaimmessenger.ClaimChannel;
-import me.justahuman.xaeroclaimmessenger.XaeroClaimMessenger;
+import me.justahuman.claimmessenger.ChunkPos;
+import me.justahuman.claimmessenger.Claim;
+import me.justahuman.claimmessenger.ClaimChannel;
+import me.justahuman.claimmessenger.ClaimMessenger;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -83,7 +83,7 @@ public class ResidenceChannel extends ClaimChannel {
                 worldKey,
                 new HashSet<>(),
                 residence.getChannelColor() == null
-                        ? XaeroClaimMessenger.locatorBarColor(residence.getOwnerUUID())
+                        ? ClaimMessenger.locatorBarColor(residence.getOwnerUUID())
                         : residence.getChannelColor().getJavaColor().getRGB()
         );
 

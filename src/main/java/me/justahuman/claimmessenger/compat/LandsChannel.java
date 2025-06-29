@@ -1,4 +1,4 @@
-package me.justahuman.xaeroclaimmessenger.compat;
+package me.justahuman.claimmessenger.compat;
 
 import me.angeschossen.lands.api.LandsIntegration;
 import me.angeschossen.lands.api.events.ChunkDeleteEvent;
@@ -10,10 +10,10 @@ import me.angeschossen.lands.api.events.LandRenameEvent;
 import me.angeschossen.lands.api.land.ChunkCoordinate;
 import me.angeschossen.lands.api.land.Container;
 import me.angeschossen.lands.api.land.Land;
-import me.justahuman.xaeroclaimmessenger.ChunkPos;
-import me.justahuman.xaeroclaimmessenger.Claim;
-import me.justahuman.xaeroclaimmessenger.ClaimChannel;
-import me.justahuman.xaeroclaimmessenger.XaeroClaimMessenger;
+import me.justahuman.claimmessenger.ChunkPos;
+import me.justahuman.claimmessenger.Claim;
+import me.justahuman.claimmessenger.ClaimChannel;
+import me.justahuman.claimmessenger.ClaimMessenger;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class LandsChannel extends ClaimChannel {
-    private final LandsIntegration api = LandsIntegration.of(XaeroClaimMessenger.getInstance());
+    private final LandsIntegration api = LandsIntegration.of(ClaimMessenger.getInstance());
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onLandCreate(LandCreateEvent event) {
@@ -112,7 +112,7 @@ public class LandsChannel extends ClaimChannel {
                 land.getColorName(),
                 world.getKey(),
                 new HashSet<>(),
-                land.getWebMapFillColor() == null ? XaeroClaimMessenger.locatorBarColor(land.getOwnerUID()) : land.getWebMapFillColor()
+                land.getWebMapFillColor() == null ? ClaimMessenger.locatorBarColor(land.getOwnerUID()) : land.getWebMapFillColor()
         );
         if (container != null) {
             for (ChunkCoordinate coordinate : container.getChunks()) {
