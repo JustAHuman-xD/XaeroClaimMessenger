@@ -1,5 +1,10 @@
 <div style="text-align: center;">
-<img src="images/title.png" alt="Title" width="33%"/><br>
+<img src="images/title.png" alt="Title" width="33%"/>
+
+![Version](https://img.shields.io/badge/latest_version-1.0.0-passing)
+![CommitStatus](https://img.shields.io/github/check-runs/JustAHuman-xD/ClaimMessenger/1.20.6%2B?label=latest+commit)
+
+<br>
 
 Claim Messenger is a basic plugin that will send players on your server using [PluginClaims] the claims on your server!
 
