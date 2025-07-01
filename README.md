@@ -1,5 +1,5 @@
 <div style="text-align: center;">
-<img src="images/title.png" alt="Title" width="25%"/><br>
+<img src="images/title.png" alt="Title" width="33%"/><br>
 
 Claim Messenger is a basic plugin that will send players on your server using [PluginClaims] the claims on your server!
 
