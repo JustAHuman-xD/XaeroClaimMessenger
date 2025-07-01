@@ -3,7 +3,6 @@ package me.justahuman.claimmessenger.compat;
 import me.justahuman.claimmessenger.ChunkPos;
 import me.justahuman.claimmessenger.Claim;
 import me.justahuman.claimmessenger.ClaimChannel;
-import me.justahuman.claimmessenger.ClaimMessenger;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.ryanhamshire.GriefPrevention.events.ClaimChangeEvent;
 import me.ryanhamshire.GriefPrevention.events.ClaimCreatedEvent;
@@ -18,44 +17,37 @@ import org.bukkit.event.EventPriority;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
 public class GriefPreventionChannel extends ClaimChannel {
+    @Override
+    public boolean runsAsync() {
+        return false;
+    }
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onClaimCreated(ClaimCreatedEvent event) {
-        Claim claim = from(event.getClaim());
         if (event.getCreator() instanceof Player player) {
-            sendClaim(player, claim);
-            notifyWithin(claim, player.getUniqueId());
+            notifyAll(from(event.getClaim()), player.getUniqueId());
         } else {
-            notifyWithin(claim);
+            notifyAll(from(event.getClaim()));
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onClaimTransferred(ClaimTransferEvent event) {
-        me.ryanhamshire.GriefPrevention.Claim gp = event.getClaim();
-        Claim claim = from(gp, event.getNewOwner());
-        sendClaim(gp.ownerID, claim);
-        sendClaim(claim.owner(), claim);
-        notifyWithin(claim, gp.ownerID, claim.owner());
+        notifyAll(from(event.getClaim(), event.getNewOwner()), event.getClaim().ownerID, event.getNewOwner());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onClaimChanged(ClaimChangeEvent event) {
-        Claim claim = from(event.getTo());
-        sendClaim(event.getFrom().ownerID, claim);
-        sendClaim(event.getTo().ownerID, claim);
-        notifyWithin(claim, event.getFrom().ownerID, event.getTo().ownerID);
+        notifyAll(from(event.getTo()), event.getFrom().ownerID, event.getTo().ownerID);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onClaimDeleted(ClaimDeletedEvent event) {
-        Claim claim = Claim.deletion(event.getClaim().getID(), event.getClaim().getLesserBoundaryCorner().getWorld().getKey());
-        deleteClaim(claim.owner(), claim);
-        deleteWithin(claim, claim.owner());
+        deleteAll(Claim.deletion(event.getClaim().getID(), event.getClaim().getLesserBoundaryCorner().getWorld().getKey()));
     }
 
     private List<Claim> from(Collection<me.ryanhamshire.GriefPrevention.Claim> gpClaims) {
@@ -75,9 +67,7 @@ public class GriefPreventionChannel extends ClaimChannel {
                 gp.getID(),
                 ownerID,
                 "",
-                gp.getLesserBoundaryCorner().getWorld().getKey(),
-                new HashSet<>(),
-                ClaimMessenger.locatorBarColor(ownerID)
+                gp.getLesserBoundaryCorner().getWorld().getKey()
         );
         Location min = gp.getLesserBoundaryCorner();
         Location max = gp.getGreaterBoundaryCorner();

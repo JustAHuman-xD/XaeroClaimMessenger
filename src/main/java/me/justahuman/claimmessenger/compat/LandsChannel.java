@@ -15,75 +15,57 @@ import me.justahuman.claimmessenger.Claim;
 import me.justahuman.claimmessenger.ClaimChannel;
 import me.justahuman.claimmessenger.ClaimMessenger;
 import org.bukkit.World;
-import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 public class LandsChannel extends ClaimChannel {
     private final LandsIntegration api = LandsIntegration.of(ClaimMessenger.getInstance());
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onLandCreate(LandCreateEvent event) {
-        delay(() -> {
-            Land land = event.getLand();
-            UUID player = event.getPlayerUUID();
-            for (Container container : land.getContainers()) {
-                Claim claim = from(container, land);
-                sendClaim(player, claim);
-                notifyWithin(claim, player);
-            }
-        });
+    @Override
+    public boolean runsAsync() {
+        return true;
     }
 
-    protected void updateLand(Land land) {
-        UUID[] players = land.getOnlinePlayers().stream()
-                .map(Entity::getUniqueId).toArray(UUID[]::new);
-        for (Container container : land.getContainers()) {
-            Claim claim = from(container, land);
-            for (UUID player : players) {
-                sendClaim(player, claim);
-            }
-            notifyWithin(claim, players);
-        }
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onLandCreate(LandCreateEvent event) {
+        delay(() -> notifyLand(event.getLand()));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onOwnerChange(LandOwnerChangeEvent event) {
-        delay(() -> updateLand(event.getLand()));
+        delay(() -> notifyLand(event.getLand()));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onRename(LandRenameEvent event) {
-        delay(() -> updateLand(event.getLand()));
+        delay(() -> notifyLand(event.getLand()));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onChunkClaim(ChunkPostClaimEvent event) {
-        updateLand(event.getLand());
+        notifyLand(event.getLand());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onChunkUnclaim(ChunkDeleteEvent event) {
-        delay(() -> updateLand(event.getLand()));
+        delay(() -> notifyLand(event.getLand()));
+    }
+
+    protected void notifyLand(Land land) {
+        for (Container container : land.getContainers()) {
+            notifyAll(from(container, land), land.getTrustedPlayers());
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onLandDelete(LandDeleteEvent event) {
-        Land land = event.getLand();
-        UUID[] players = land.getOnlinePlayers().stream()
-                .map(Entity::getUniqueId).toArray(UUID[]::new);
-        for (Container container : land.getContainers()) {
-            Claim claim = Claim.deletion(land.getULID().hashCode(), container.getWorld().getWorld().getKey());
-            for (UUID player : players) {
-                sendClaim(player, claim);
-            }
-            deleteWithin(claim, players);
+        for (Container container : event.getLand().getContainers()) {
+            deleteAll(Claim.deletion(event.getLand().getULID().hashCode(), container.getWorld().getWorld().getKey()));
         }
     }
 
@@ -91,10 +73,10 @@ public class LandsChannel extends ClaimChannel {
     protected List<Claim> getClaims(ChunkPos chunk) {
         World world = chunk.getWorld();
         if (world == null) {
-            return List.of();
+            return NONE;
         }
         Land land = api.getLandByChunk(world, chunk.x(), chunk.z());
-        return land != null ? List.of(from(world, land)) : List.of();
+        return land != null ? Collections.singletonList(from(world, land)) : NONE;
     }
 
     public Claim from(@NotNull World world, @NotNull Land land) {
@@ -111,7 +93,6 @@ public class LandsChannel extends ClaimChannel {
                 land.getOwnerUID(),
                 land.getColorName(),
                 world.getKey(),
-                new HashSet<>(),
                 land.getWebMapFillColor() == null ? ClaimMessenger.locatorBarColor(land.getOwnerUID()) : land.getWebMapFillColor()
         );
         if (container != null) {

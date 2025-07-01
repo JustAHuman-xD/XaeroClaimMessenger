@@ -22,7 +22,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 
 import java.awt.*;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,59 +39,59 @@ public class TownyChannel extends ClaimChannel {
         }
     }
 
-    protected void updateTown(Town town) {
-        Claim claim = from(town);
-        UUID[] residents = town.getResidents().stream().map(Resident::getUUID).toArray(UUID[]::new);
-        for (UUID resident : residents) {
-            sendClaim(resident, claim);
-        }
-        notifyWithin(claim, residents);
+    @Override
+    public boolean runsAsync() {
+        return true;
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onNewTown(NewTownEvent event) {
-        updateTown(event.getTown());
+        notifyTown(event.getTown());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onMayorChanged(TownMayorChangedEvent event) {
-        updateTown(event.getTown());
+        notifyTown(event.getTown());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onRename(RenameTownEvent event) {
-        updateTown(event.getTown());
+        notifyTown(event.getTown());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onClaim(TownClaimEvent event) {
-        updateTown(event.getTown());
+        notifyTown(event.getTown());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onUnclaim(TownUnclaimEvent event) {
-        updateTown(event.getTown());
+        notifyTown(event.getTown());
+    }
+
+    protected void notifyTown(Town town) {
+        if (town != null) {
+            List<UUID> players = new ArrayList<>();
+            for (Resident resident : town.getResidents()) {
+                players.add(resident.getUUID());
+            }
+            notifyAll(from(town), players);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onTownDelete(PreDeleteTownEvent event) {
-        Town town = event.getTown();
-        Claim claim = Claim.deletion(town.getUUID().hashCode(), town.getWorld().getKey());
-        UUID[] residents = town.getResidents().stream().map(Resident::getUUID).toArray(UUID[]::new);
-        for (UUID resident : residents) {
-            deleteClaim(resident, claim);
-        }
-        deleteWithin(claim, residents);
+        deleteAll(Claim.deletion(event.getTown().getUUID().hashCode(), event.getTown().getWorld().getKey()));
     }
 
     @Override
     protected List<Claim> getClaims(ChunkPos chunk) {
         World world = chunk.getWorld();
         if (world == null) {
-            return List.of();
+            return NONE;
         }
         Town town = api.getTown(new Location(world, chunk.x() << 4, 0, chunk.z() << 4));
-        return town == null ? List.of() : List.of(from(town));
+        return town == null ? NONE : Collections.singletonList(from(town));
     }
 
     public Claim from(Town town) {
@@ -101,7 +102,6 @@ public class TownyChannel extends ClaimChannel {
                 town.getMayor().getUUID(),
                 town.getFormattedName(),
                 worldKey,
-                new HashSet<>(),
                 townColor == null ? ClaimMessenger.locatorBarColor(town.getMayor().getUUID()) : townColor.getRGB()
         );
 

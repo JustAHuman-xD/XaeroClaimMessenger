@@ -12,13 +12,15 @@ import me.justahuman.claimmessenger.ChunkPos;
 import me.justahuman.claimmessenger.Claim;
 import me.justahuman.claimmessenger.ClaimChannel;
 import me.justahuman.claimmessenger.ClaimMessenger;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,33 +31,27 @@ public class ResidenceChannel extends ClaimChannel {
         this.manager = Residence.getInstance().getResidenceManager();
     }
 
+    @Override
+    public boolean runsAsync() {
+        return true;
+    }
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onResidenceEvent(ResidenceEvent event) {
         ClaimedResidence residence = event.getResidence();
         Claim claim = from(residence);
-        UUID[] members = residence.getTrustedPlayers().stream()
-                .map(ResidencePlayer::getUniqueId).toArray(UUID[]::new);
+        List<UUID> players = new ArrayList<>();
+        for (ResidencePlayer residencePlayer : residence.getTrustedPlayers()) {
+            players.add(residencePlayer.getUniqueId());
+        }
 
         if (event instanceof ResidenceDeleteEvent || event instanceof ResidenceRenameEvent) {
-            for (UUID member : members) {
-                deleteClaim(member, claim);
-            }
-            deleteWithin(claim, members);
+            deleteAll(claim);
             if (event instanceof ResidenceRenameEvent rename) {
-                delay(() -> {
-                    ClaimedResidence newResidence = manager.getByName(rename.getNewResidenceName());
-                    Claim newClaim = from(newResidence);
-                    for (UUID member : members) {
-                        sendClaim(member, newClaim);
-                    }
-                    notifyWithin(newClaim, members);
-                });
+                delay(() -> notifyAll(from(manager.getByName(rename.getNewResidenceName())), players));
             }
         } else {
-            for (UUID member : members) {
-                sendClaim(member, claim);
-            }
-            notifyWithin(claim, members);
+            notifyAll(claim, players);
         }
     }
 
@@ -63,14 +59,14 @@ public class ResidenceChannel extends ClaimChannel {
     protected List<Claim> getClaims(ChunkPos chunk) {
         Location location = chunk.toLocation();
         if (location == null) {
-            return List.of();
+            return NONE;
         }
         ClaimedResidence residence = Residence.getInstance().getResidenceManager().getByLoc(location);
-        return residence == null ? List.of() : List.of(from(residence));
+        return residence == null ? NONE : Collections.singletonList(from(residence));
     }
 
     private Claim from(ClaimedResidence residence) {
-        World world = residence.getPermissions().getBukkitWorld();
+        World world = Bukkit.getWorld(residence.getPermissions().getWorldName());
         if (world == null) {
             throw new IllegalStateException("Residence world is null for " + residence.getName());
         }
@@ -81,7 +77,6 @@ public class ResidenceChannel extends ClaimChannel {
                 residence.getOwnerUUID(),
                 residence.getName(),
                 worldKey,
-                new HashSet<>(),
                 residence.getChannelColor() == null
                         ? ClaimMessenger.locatorBarColor(residence.getOwnerUUID())
                         : residence.getChannelColor().getJavaColor().getRGB()

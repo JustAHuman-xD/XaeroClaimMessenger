@@ -1,7 +1,11 @@
 package me.justahuman.claimmessenger;
 
-import io.papermc.paper.event.packet.PlayerChunkLoadEvent;
-import io.papermc.paper.event.packet.PlayerChunkUnloadEvent;
+import com.github.retrooper.packetevents.event.PacketListener;
+import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkData;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerUnloadChunk;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,22 +15,23 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRegisterChannelEvent;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public abstract class ClaimChannel implements Listener {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClaimChannel.class);
+public abstract class ClaimChannel implements PacketListener, Listener {
     private static final int CHANNEL_REGISTER_TIMEOUT = 20 * 3;
-    private final Map<UUID, Boolean> subscribedPlayers = new HashMap<>();
+    protected static final List<Claim> NONE = Collections.emptyList();
+
+    protected final Map<UUID, Boolean> subscribedPlayers = new HashMap<>();
     protected final Map<ChunkPos, List<UUID>> players = new HashMap<>();
 
     protected ClaimChannel() {
@@ -34,10 +39,13 @@ public abstract class ClaimChannel implements Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
+    protected abstract List<Claim> getClaims(ChunkPos chunk);
+    public abstract boolean runsAsync();
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        Bukkit.getScheduler().runTaskLater(ClaimMessenger.getInstance(), () -> {
+        delay(() -> {
             UUID playerId = player.getUniqueId();
             if (!subscribedPlayers.containsKey(playerId)) {
                 for (ChunkPos pos : players.keySet()) {
@@ -70,16 +78,24 @@ public abstract class ClaimChannel implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onLoadChunk(PlayerChunkLoadEvent event) {
-        Player player = event.getPlayer();
+    @Override
+    public void onPacketSend(PacketSendEvent event) {
+        PacketTypeCommon type = event.getPacketType();
+        if (type == PacketType.Play.Server.CHUNK_DATA) {
+            onLoadChunk(event.getPlayer(), new WrapperPlayServerChunkData(event));
+        } else if (type == PacketType.Play.Server.UNLOAD_CHUNK) {
+            onUnloadChunk(event.getPlayer(), new WrapperPlayServerUnloadChunk(event));
+        }
+    }
+
+    public void onLoadChunk(Player player, WrapperPlayServerChunkData wrapper) {
         UUID playerId = player.getUniqueId();
         Boolean subscribed = this.subscribedPlayers.get(playerId);
         if (subscribed != null && !subscribed) {
             return;
         }
 
-        ChunkPos pos = new ChunkPos(event.getChunk().getWorld().getKey(), event.getChunk().getX(), event.getChunk().getZ());
+        ChunkPos pos = new ChunkPos(player.getWorld().getKey(), wrapper.getColumn().getX(), wrapper.getColumn().getZ());
         List<UUID> players = this.players.getOrDefault(pos, new ArrayList<>());
         players.add(playerId);
         this.players.put(pos, players);
@@ -87,25 +103,26 @@ public abstract class ClaimChannel implements Listener {
             return;
         }
 
-        List<Claim> claims = getClaims(pos);
-        if (claims.isEmpty()) {
-            sendNoClaims(player, pos);
-        } else {
-            for (Claim claim : getClaims(pos)) {
-                sendClaim(player, claim);
+        run(() -> {
+            List<Claim> claims = getClaims(pos);
+            if (claims.isEmpty()) {
+                sendNoClaims(player, pos);
+            } else {
+                for (Claim claim : getClaims(pos)) {
+                    sendClaim(player, claim);
+                }
             }
-        }
+        });
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onUnloadChunk(PlayerChunkUnloadEvent event) {
-        UUID playerId = event.getPlayer().getUniqueId();
+    public void onUnloadChunk(Player player, WrapperPlayServerUnloadChunk wrapper) {
+        UUID playerId = player.getUniqueId();
         Boolean subscribed = this.subscribedPlayers.get(playerId);
         if (subscribed != null && !subscribed) {
             return;
         }
 
-        ChunkPos pos = new ChunkPos(event.getChunk().getWorld().getKey(), event.getChunk().getX(), event.getChunk().getZ());
+        ChunkPos pos = new ChunkPos(player.getWorld().getKey(), wrapper.getChunkX(), wrapper.getChunkZ());
         List<UUID> players = this.players.get(pos);
         if (players != null) {
             players.remove(playerId);
@@ -121,69 +138,102 @@ public abstract class ClaimChannel implements Listener {
         }
     }
 
+    protected void run(Runnable runnable) {
+        if (runsAsync()) {
+            Bukkit.getScheduler().runTaskAsynchronously(ClaimMessenger.getInstance(), runnable);
+        } else {
+            if (Bukkit.isPrimaryThread()) {
+                runnable.run();
+            } else {
+                Bukkit.getScheduler().runTask(ClaimMessenger.getInstance(), runnable);
+            }
+        }
+    }
+
     protected void delay(Runnable runnable) {
-        Bukkit.getScheduler().runTaskLater(ClaimMessenger.getInstance(), runnable, 1L);
+        delay(runnable, 0);
     }
 
-    protected abstract List<Claim> getClaims(ChunkPos chunk);
-
-    public void notifyWithin(Claim claim, UUID... exclude) {
-        notifyWithin(claim, false, exclude);
+    protected void delay(Runnable runnable, int delay) {
+        if (runsAsync()) {
+            if (delay > 0) {
+                Bukkit.getScheduler().runTaskLaterAsynchronously(ClaimMessenger.getInstance(), runnable, delay);
+            } else {
+                Bukkit.getScheduler().runTaskAsynchronously(ClaimMessenger.getInstance(), runnable);
+            }
+        } else {
+            if (delay > 0) {
+                Bukkit.getScheduler().runTaskLater(ClaimMessenger.getInstance(), runnable, delay);
+            } else {
+                Bukkit.getScheduler().runTask(ClaimMessenger.getInstance(), runnable);
+            }
+        }
     }
 
-    public void deleteWithin(Claim claim, UUID... exclude) {
-        notifyWithin(claim, true, exclude);
+    public void notifyAll(Claim claim, UUID... explicit) {
+        notifyAll(claim, Arrays.asList(explicit));
     }
 
-    public void notifyWithin(Claim claim, boolean delete, UUID... exclude) {
-        List<UUID> excluded = Arrays.asList(exclude);
+    public void notifyAll(Claim claim, Collection<UUID> explicit) {
+        if (claim == null) {
+            return;
+        }
+
+        for (UUID playerId : explicit) {
+            sendClaim(playerId, claim);
+        }
+
         for (ChunkPos chunk : claim.chunks()) {
             List<UUID> players = this.players.get(chunk);
             if (players != null) {
                 for (UUID playerId : players) {
-                    if (!excluded.contains(playerId)) {
-                        if (delete) {
-                            deleteClaim(playerId, claim);
-                        } else {
-                            sendClaim(playerId, claim);
-                        }
+                    if (!explicit.contains(playerId)) {
+                        sendClaim(playerId, claim);
                     }
                 }
             }
         }
     }
 
-    public void sendClaim(@Nullable UUID playerId, @NotNull Claim claim) {
+    public void deleteAll(Claim claim) {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (subscribedPlayers.getOrDefault(player.getUniqueId(), false)) {
+                deleteClaim(player, claim);
+            }
+        }
+    }
+
+    public void sendClaim(@Nullable UUID playerId, @Nonnull Claim claim) {
         if (playerId != null) {
             sendClaim(Bukkit.getPlayer(playerId), claim);
         }
     }
 
-    public void sendClaim(@Nullable Player player, @NotNull Claim claim) {
+    public void sendClaim(@Nullable Player player, @Nonnull Claim claim) {
         if (player != null && subscribedPlayers.getOrDefault(player.getUniqueId(), false)) {
             player.sendPluginMessage(ClaimMessenger.getInstance(), ClaimMessenger.CLAIM_CHANNEL, claim.serialize());
         }
     }
 
-    public void sendNoClaims(@Nullable UUID playerId, @NotNull ChunkPos pos) {
+    public void sendNoClaims(@Nullable UUID playerId, @Nonnull ChunkPos pos) {
         if (playerId != null) {
             sendNoClaims(Bukkit.getPlayer(playerId), pos);
         }
     }
 
-    public void sendNoClaims(@Nullable Player player, @NotNull ChunkPos pos) {
+    public void sendNoClaims(@Nullable Player player, @Nonnull ChunkPos pos) {
         if (player != null && subscribedPlayers.getOrDefault(player.getUniqueId(), false)) {
             player.sendPluginMessage(ClaimMessenger.getInstance(), ClaimMessenger.NO_CLAIMS_CHANNEL, pos.serializeNoClaims());
         }
     }
 
-    public void deleteClaim(@Nullable UUID playerId, @NotNull Claim claim) {
+    public void deleteClaim(@Nullable UUID playerId, @Nonnull Claim claim) {
         if (playerId != null) {
             deleteClaim(Bukkit.getPlayer(playerId), claim);
         }
     }
 
-    public void deleteClaim(@Nullable Player player, @NotNull Claim claim) {
+    public void deleteClaim(@Nullable Player player, @Nonnull Claim claim) {
         if (player != null && subscribedPlayers.getOrDefault(player.getUniqueId(), false)) {
             player.sendPluginMessage(ClaimMessenger.getInstance(), ClaimMessenger.DELETE_CHANNEL, claim.serializeDeletion());
         }

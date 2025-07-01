@@ -17,9 +17,8 @@ import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 public class HuskTownsChannel extends ClaimChannel {
     private final BukkitHuskTowns huskTowns;
@@ -29,19 +28,16 @@ public class HuskTownsChannel extends ClaimChannel {
         this.huskTowns = (BukkitHuskTowns) Bukkit.getPluginManager().getPlugin(ClaimMessenger.HUSK_TOWNS);
     }
 
+    @Override
+    public boolean runsAsync() {
+        return true;
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onEditTown(TownUpdateEvent event) {
         delay(() -> {
-            Town town = event.getTown();
             for (World world : Bukkit.getWorlds()) {
-                Claim claim = from(world, town);
-                if (claim != null) {
-                    UUID[] members = town.getMembers().keySet().toArray(new UUID[0]);
-                    for (UUID member : members) {
-                        sendClaim(member, claim);
-                    }
-                    notifyWithin(claim, members);
-                }
+                notifyAll(from(world, event.getTown()), event.getTown().getMembers().keySet());
             }
         });
     }
@@ -49,14 +45,8 @@ public class HuskTownsChannel extends ClaimChannel {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onTownDeleted(TownDisbandEvent event) {
         delay(() -> {
-            Town town = event.getTown();
             for (World world : Bukkit.getWorlds()) {
-                Claim claim = Claim.deletion(town.getId(), world.getKey());
-                UUID[] members = town.getMembers().keySet().toArray(new UUID[0]);
-                for (UUID member : members) {
-                    sendClaim(member, claim);
-                }
-                deleteWithin(claim, members);
+                deleteAll(Claim.deletion(event.getTown().getId(), world.getKey()));
             }
         });
     }
@@ -68,7 +58,6 @@ public class HuskTownsChannel extends ClaimChannel {
                 town.getMayor(),
                 town.getName(),
                 world.getKey(),
-                new HashSet<>(),
                 town.getDisplayColor().value()
             );
             for (TownClaim townClaim : claimWorld.getTownClaims(town.getId(), huskTowns)) {
@@ -84,13 +73,13 @@ public class HuskTownsChannel extends ClaimChannel {
     protected List<Claim> getClaims(ChunkPos chunk) {
         Location location = chunk.toLocation();
         if (location == null) {
-            return List.of();
+            return NONE;
         }
         TownClaim townClaim = api.getClaimAt(location).orElse(null);
         if (townClaim == null) {
-            return List.of();
+            return NONE;
         }
         Claim claim = from(location.getWorld(), townClaim.town());
-        return claim == null ? List.of() : List.of(claim);
+        return claim == null ? NONE : Collections.singletonList(claim);
     }
 }
