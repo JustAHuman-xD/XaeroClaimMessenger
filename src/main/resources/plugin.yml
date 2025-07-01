@@ -1,8 +1,8 @@
 name: ClaimMessenger
-version: '1.0.0'
+version: ${plugin.version}
 main: me.justahuman.claimmessenger.ClaimMessenger
 api-version: '1.20'
 load: POSTWORLD
 authors: [ JustAHuman ]
 description: A plugin sending clients claim information for map mods such as JourneyMap and Xaero's World/Mini Map.
-softdepend: [ HuskClaims, HuskTowns, GriefPrevention, Lands, Towny, Residence ]
+softdepend: [ ${plugin.softdepend} ]
