@@ -26,8 +26,14 @@ Claim Messenger also adds nearly no performance overhead so it costs you nothing
         <td style="width:0.1%">Tested Versions</td>
     </tr>
     <tr>
+        <td>Java</td>
+        <td>Required</td>
+        <td>16+</td>
+        <td>N/A</td>
+    </tr>
+    <tr>
         <td>Minecraft</td>
-        <td>Supported</td>
+        <td>Required</td>
         <td>1.20.6+</td>
         <td>1.20.6, 1.21.4</td>
     </tr>
